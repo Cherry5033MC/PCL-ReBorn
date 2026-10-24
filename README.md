@@ -18,7 +18,7 @@ Plain Craft Launcher 2 ReBron（下称 ReBron）是 PCL2 的修改版，在官�
 | 3 | **崩溃修复**       | 修复资源页可能触发的 `Embedded resource "Resource\WikiEntries.txt" was not found` 崩溃（资源读取改为三级回退，最坏情况只损失 Mod 中文译名，不再崩溃） |
 | 4 | **关于页更新**      | 新增 ReBron 版作者信息，标明原作者与修改版作者                                                                                  |
 | 5 | **标题栏标识**      | 标题栏 PCL 标志右侧新增 ReBorn 字样                                                                                     |
-| 6 | **跨平台构建支持**    | 提供 Linux 下使用 .NET SDK 构建 .NET Framework 4.8 WPF 工程的完整方案                                                      |
+| 6 | **跨平台构建支持**    | 提供 Linux 下使用 .NET SDK 构建 .NET Framework 4.8 WPF 工程的完整方案 （仓库中暂时没有相关代码，请联系作者获取）                                                     |
 
 > ⚠️ ReBron 是**第三方修改版**，与龙腾猫跃官方无关联。使用中遇到的 ReBron 特有问题请提交到本仓库 Issues，**不要**提交到官方仓库。  
 > 本仓库仅供学习交流，PCL2 及其源码版权归 龙腾猫跃 所有。
