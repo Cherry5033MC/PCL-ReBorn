@@ -1,39 +1,57 @@
-name: "Minecraft 崩溃"
-description: "PCL 提示 “Minecraft 出现错误”，或游戏崩溃"
-labels: [· Bug, 新提交]
+name: "Bug 报告（启动器问题）"
+description: "ReBron 启动器本身出现崩溃、报错或显示异常"
+labels: ["Bug"]
 body:
-- type: checkboxes
-  id: "yml-1"
-  attributes:
-    label: "检查项"
-    description: "请逐个检查下列项目，并勾选确认。"
-    options:
-    - label: "**我所启动的游戏不是整合包，且未安装任何 Mod。** 安装 Mod 后的崩溃基本不是 PCL 导致的，请 **不要** 提交反馈。你可以前往 [PCL 汉医堂](https://qm.qq.com/q/JJTzwEAmcw) 等民间 QQ 群求助，但这里不是求助的地方……"
-      required: false
-    - label: "**我已尝试使用 HMCL 启动，HMCL 没有出现问题。** 如果 HMCL 也无法启动就不是 PCL 导致的问题，请 **不要** 提交反馈。[下载 HMCL](https://hmcl.huangyuhui.net/download)"
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 检查项
+      description: 请逐个确认后再提交
+      options:
+        - label: 我确认这是 **ReBron 修改版** 的问题，PCL 官方正式版没有此问题（或不确定）。官方版自身的问题请到 [官方仓库](https://github.com/Meloong-Git/PCL/issues) 反馈。
+          required: true
+        - label: 我已搜索 [现有 Issues](../../issues?q=is%3Aissue)，确认此问题未被提交过。
+          required: true
+        - label: 我使用的是本仓库最新构建的版本，而非官方版或其他二次打包版。
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 详细描述问题表现，包括在哪个页面、做了什么操作后出现。
+    validations:
       required: true
-    - label: "我已在 [Issues 页面](https://github.com/Meloong-Git/PCL/issues?q=is%3Aissue+) 和 [常见&难检反馈及问题列表](https://github.com/Meloong-Git/PCL/discussions/1930) 中搜索，确认了这一 Bug 未被提交过。"
+  - type: textarea
+    id: steps
+    attributes:
+      label: 重现步骤
+      description: 让维护者能复现此问题的最小步骤。
+      placeholder: |
+        1. 打开 XX 页面
+        2. 点击 XX
+        3. 出现 XX
+    validations:
       required: true
-- type: textarea
-  id: "yml-2"
-  attributes:
-    label: 描述
-    description: "详细描述具体表现。"
-  validations:
-    required: true
-- type: textarea
-  id: "yml-3"
-  attributes:
-    label: PCL 错误报告、日志与附件
-    description: "上传 PCL 提供的错误报告（在崩溃时选择导出错误报告）。如果没有，也可以上传 PCL 文件夹中的 Log1~5.txt。"
-    placeholder: "先点击这个文本框，然后再将文件直接拖拽到文本框中以上传。"
-  validations:
-    required: true
-- type: textarea
-  id: "yml-4"
-  attributes:
-    label: HMCL 启动脚本
-    description: "在 HMCL 中进入版本列表，点击版本右侧的三个点，选择 生成启动脚本。"
-    placeholder: "先点击这个文本框，然后再将文件直接拖拽到文本框中以上传。"
-  validations:
-    required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: 错误报告与日志
+      description: |
+        崩溃时请上传 PCL 导出的错误报告；没有报告的，上传 PCL 文件夹中的 Log1~5.txt。
+        先点击文本框，再将文件拖拽进文本框上传。
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ReBron 版本
+      description: "见“关于”页版本行，例如 2.99.0.0"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: 操作系统
+      description: "例如 Windows 11 23H2 / Windows 10 19045"
+    validations:
+      required: true
