@@ -18,15 +18,14 @@ Public Module ModBase
 
     '版本信息
     Public Const VersionFullTag As String = VersionBaseName & "-" & VersionReBorn & VersionPatchTag '完整版本标签，如 2.99.0.0-reborn.1.0.0.0(1.b)
+    '显示用版本类型：作者发布的成品显示“正式版”，从源码构建的显示“开源版”
+    Public Const BuildTypeDisplay As String = If(IsAuthorBuild, "正式版", "开源版")
     Public Const VersionDisplay As String = BuildTypeDisplay & " " & VersionBaseName & " " & VersionReBorn & VersionPatchTag
 #If DEBUG Then
-    Public Const BuildTypeDisplay As String = "开发版"
     Public Const BuildType As BuildTypes = BuildTypes.Debug
 #ElseIf RELEASE Then
-    Public Const BuildTypeDisplay As String = "正式版"
     Public Const BuildType As BuildTypes = BuildTypes.Release
 #Else
-    Public Const BuildTypeDisplay As String = "快照版"
     Public Const BuildType As BuildTypes = BuildTypes.Snapshot
 #End If
     Public Enum BuildTypes
