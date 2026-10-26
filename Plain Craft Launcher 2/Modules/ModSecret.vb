@@ -166,20 +166,11 @@ Friend Module ModSecret
     ''' </summary>
     Private Function ParseVersionTag(Tag As String, ByRef BaseVer As Version, ByRef RebornVer As Version, ByRef PatchNum As Integer, ByRef PatchLetter As Integer) As Boolean
         Dim T As String = Tag.Trim().TrimStart("v"c, "V"c)
-        Dim BasePart As String = "", Rest As String = ""
+        Dim BasePart As String = T, Rest As String = ""
         Dim Idx As Integer = T.IndexOf("-reborn", StringComparison.OrdinalIgnoreCase)
         If Idx >= 0 Then
-            '标准格式：2.99.0.0-reborn.1.0.0.0(1.b)
             BasePart = T.Substring(0, Idx)
             Rest = T.Substring(Idx + 7).TrimStart("."c)
-        ElseIf T.StartsWith("reborn", StringComparison.OrdinalIgnoreCase) Then
-            '容错：允许省略主版本号前缀，如 reborn.1.0.0.0(1.b)，此时沿用当前版本的基础版本号
-            BasePart = VersionBaseName
-            Rest = T.Substring(6).TrimStart("."c)
-        Else
-            '纯 PCL 官方版本号格式，如 2.99.0.0
-            BasePart = T
-            Rest = ""
         End If
         Dim RebornPart As String = Rest
         PatchNum = 0 : PatchLetter = 0
@@ -194,12 +185,10 @@ Friend Module ModSecret
                 If PatchLetter < 0 Then PatchLetter = 0
             End If
         End If
+        BaseVer = Nothing
         RebornVer = New Version(0, 0, 0, 0)
-        If Not Version.TryParse(BasePart, BaseVer) Then BaseVer = Nothing
-        If RebornPart <> "" Then Version.TryParse(RebornPart, RebornVer)
-        '主版本号与 ReBorn 版本号都解析失败时才认为无法比较
-        If BaseVer Is Nothing AndAlso RebornVer.Equals(New Version(0, 0, 0, 0)) Then Return False
-        If BaseVer Is Nothing Then BaseVer = New Version(VersionBaseName)
+        If Not Version.TryParse(BasePart, BaseVer) Then Return False
+        Version.TryParse(RebornPart, RebornVer)
         Return True
     End Function
 
