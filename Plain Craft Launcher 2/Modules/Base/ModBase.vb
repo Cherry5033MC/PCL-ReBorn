@@ -35,6 +35,9 @@ Public Module ModBase
         Snapshot = 0
     End Enum
 
+    '是否为作者发布的成品版本：作者发布成品前改为 True（启用自动更新）；从源码自行构建时保持 False（显示开源版本提示）
+    Public Const IsAuthorBuild As Boolean = False
+
     ''' <summary>
     ''' 主窗口句柄。
     ''' </summary>
