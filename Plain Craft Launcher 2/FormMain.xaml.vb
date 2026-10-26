@@ -619,7 +619,10 @@ Public Class FormMain
         On Error Resume Next
         IsProgramEnding = True
         AniControlEnabled += 1
-        If IsUpdateWaitingRestart Then UpdateRestart(False)
+        If IsUpdateWaitingRestart Then
+            IsUpdateWaitingRestart = False '防止重复触发替换进程
+            UpdateRestart(True) '更新场景下应当重启启动器
+        End If
         If ReturnCode = ProcessReturnValues.Exception Then
             If Not IsLogShown Then
                 FeedbackInfo()
