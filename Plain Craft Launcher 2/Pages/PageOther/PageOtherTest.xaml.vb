@@ -123,8 +123,11 @@ Public Class PageOtherTest
                                         '打开文件所在文件夹
                                         RunInUi(Sub() OpenExplorer(LocalPath))
                                         LoaderTaskbar.Remove(l)
-                                    ElseIf l.State = LoadState.Failed OrElse l.State = LoadState.Canceled Then
+                                    ElseIf l.State = LoadState.Failed Then
                                         Hint($"下载失败：{FileName}，详情请查看日志", HintType.Red)
+                                        LoaderTaskbar.Remove(l)
+                                    ElseIf l.State = LoadState.Canceled Then
+                                        Hint($"下载已取消：{FileName}", HintType.Blue)
                                         LoaderTaskbar.Remove(l)
                                     End If
                                 End Sub
