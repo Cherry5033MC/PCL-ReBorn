@@ -237,8 +237,8 @@ Friend Module ModSecret
     End Function
 
     Friend Sub UpdateCheckByButton()
-        '开源版本：不提供在线更新
-        If BuildType = BuildTypes.Release Then
+        '非作者成品（如自行从源码构建）：不提供在线更新
+        If Not IsAuthorBuild Then
             If MyMsgBox("你正在使用 PCL ReBorn 开源版本，不包含在线更新功能。" & vbCrLf &
                         "请前往 GitHub Releases 页面手动下载最新版本。", "检查更新", "前往 GitHub", "取消") = 1 Then
                 OpenWebsite(UpdateReleaseUrl)
@@ -266,10 +266,10 @@ Friend Module ModSecret
 
     ''' <summary>
     ''' 启动时自动检查更新。发现新版本时按设置决定是否自动下载。
-    ''' 开源版本仅提示一次开源信息，不进行更新。
+    ''' 非作者成品（如自行从源码构建）仅提示一次开源信息，不进行更新。
     ''' </summary>
     Friend Sub UpdateCheckAuto()
-        If BuildType = BuildTypes.Release Then
+        If Not IsAuthorBuild Then
             Hint("你正在使用 PCL ReBorn 开源版本，更新与反馈请前往 GitHub 仓库", HintType.Blue)
             Return
         End If
