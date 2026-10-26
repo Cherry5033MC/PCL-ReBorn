@@ -8,7 +8,7 @@ Public Module ModBase
     '下列版本信息由更新器自动修改
     Public Const VersionBaseName As String = "2.99.0.0" '主版本号：基于的 PCL 原版版本
     Public Const VersionReBorn As String = "reborn.1.0.0.0" 'ReBorn 修订版本号
-    Public Const VersionPatchTag As String = "(1.b)" '次版本号：数字越大 ReBorn 版本越高，字母为该发行版经过的补丁次数
+    Public Const VersionPatchTag As String = "(1.c)" '次版本号：数字越大 ReBorn 版本越高，字母为该发行版经过的补丁次数
     Public Const CommitHash As String = "" 'Commit Hash，由 GitHub Workflow 自动替换
 #If RELEASE Then
     Public Const VersionCode As Integer = 413 '正式版
