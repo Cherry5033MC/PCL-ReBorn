@@ -194,9 +194,14 @@ Friend Module ModSecret
 
     ''' <summary>TagA 是否比 TagB 更新？比较顺序：主版本号 → ReBorn 版本 → 次版本号 → 补丁字母。</summary>
     Private Function IsVersionTagNewer(TagA As String, TagB As String) As Boolean
-        Dim A1 As Version = Nothing, B1 As Version = Nothing
-        Dim A2 As Version = Nothing, B2 As Version = Nothing
-        Dim A3, B3, A4, B4 As Integer = 0
+        Dim A1 As Version = Nothing
+        Dim B1 As Version = Nothing
+        Dim A2 As Version = Nothing
+        Dim B2 As Version = Nothing
+        Dim A3 As Integer = 0
+        Dim B3 As Integer = 0
+        Dim A4 As Integer = 0
+        Dim B4 As Integer = 0
         If Not ParseVersionTag(TagA, A1, A2, A3, A4) Then Return False
         If Not ParseVersionTag(TagB, B1, B2, B3, B4) Then Return False
         If A1 <> B1 Then Return A1 > B1
