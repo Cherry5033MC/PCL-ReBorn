@@ -131,29 +131,13 @@ Public Class PageOtherLeft
         e.Handled = True
     End Sub
     Public Shared Sub TryFeedback()
-        If False.Equals(PageSetupSystem.IsLauncherNewest) Then
-            If MyMsgBox($"你的 PCL 不是最新版，因此无法提交反馈。{vbCrLf}请在更新后，确认该问题在最新版中依然存在，然后再提交反馈。", "无法提交反馈", "更新", "取消") = 1 Then
-                UpdateCheckByButton()
-            End If
-            Return
-        End If
-        Select Case MyMsgBox("在提交新反馈前，建议先搜索反馈列表，以避免重复提交。" & vbCrLf & "如果无法打开该网页，请使用 VPN 改善网络环境。",
-                    "反馈", "提交新反馈", "查看反馈列表", "取消")
+        Select Case MyMsgBox("在提交新反馈前，建议先搜索 Issue 列表，以避免重复提交。" & vbCrLf & "反馈将通过 GitHub Issue 提交，如果无法打开该网页，请使用 VPN 改善网络环境。",
+                    "反馈", "提交新 Issue", "查看 Issue 列表", "取消")
             Case 1
-                Feedback(True, False)
+                OpenWebsite("https://github.com/Cherry5033MC/PCL-ReBorn/issues/new/choose")
             Case 2
-                OpenWebsite("https://github.com/Meloong-Git/PCL/issues/")
+                OpenWebsite("https://github.com/Cherry5033MC/PCL-ReBorn/issues")
         End Select
-    End Sub
-    Private Sub TryVote(sender As Object, e As RouteEventArgs) Handles ItemVote.Changed
-        If Not ItemVote.Checked Then Return
-        TryVote()
-        e.Handled = True
-    End Sub
-    Public Shared Sub TryVote()
-        If MyMsgBox("是否要打开新功能投票网页？" & vbCrLf & "如果无法打开该网页，请使用 VPN 改善网络环境。",
-                    "新功能投票", "打开", "取消") = 2 Then Return
-        OpenWebsite("https://github.com/Meloong-Git/PCL/discussions/categories/%E5%8A%9F%E8%83%BD%E6%8A%95%E7%A5%A8?discussions_q=category%3A%E5%8A%9F%E8%83%BD%E6%8A%95%E7%A5%A8+sort%3Adate_created")
     End Sub
 
 End Class

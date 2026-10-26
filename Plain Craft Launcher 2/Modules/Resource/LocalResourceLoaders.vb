@@ -107,11 +107,15 @@ Public Module LocalResourceLoaders
         For Each ModEntry As LocalResourceFile In Loader.Input.ModList
             If Loader.IsCanceled Then Return
             Dim CacheKey = ModEntry.ModrinthHash & Loader.Input.Target.VanillaName & ModLoaders
-            If Cache.ContainsKey(CacheKey) Then
-                ModEntry.FromJson(Cache(CacheKey))
-                '如果缓存中的信息在 6 小时以内更新过，则无需重新获取
-                If ModEntry.OnlineDataLoaded AndAlso Date.Now - Cache(CacheKey)("Project")("CacheTime").ToObject(Of Date) < New TimeSpan(6, 0, 0) Then Continue For
-            End If
+            Try
+                If Cache.ContainsKey(CacheKey) Then
+                    ModEntry.FromJson(Cache(CacheKey))
+                    '如果缓存中的信息在 6 小时以内更新过，则无需重新获取
+                    If ModEntry.OnlineDataLoaded AndAlso Date.Now - Cache(CacheKey)("Project")("CacheTime").ToObject(Of Date) < New TimeSpan(6, 0, 0) Then Continue For
+                End If
+            Catch ex As Exception
+                Logger.Warn(ex, "读取本地 Mod 信息缓存失败，已忽略该缓存并重新获取")
+            End Try
             Mods.Add(ModEntry)
         Next
         Logger.Info($"有 {Mods.Where(Function(m) m.Project Is Nothing).Count} 个 Mod 需要联网获取信息，{Mods.Where(Function(m) m.Project IsNot Nothing).Count} 个 Mod 需要更新信息")

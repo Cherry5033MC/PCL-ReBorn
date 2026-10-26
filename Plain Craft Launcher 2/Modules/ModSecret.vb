@@ -3,10 +3,10 @@
 Friend Module ModSecret
 
     '标注 PCL 的不同分支，仅用于替换标记
-    Public Const VersionBranchMain As String = "ReBorn Open"
+    Public Const VersionBranchMain As String = "ReBorn"
     '在开源版的注册表与常规版的注册表隔离，以防数据冲突
     Public Const RegFolder As String = "PCLDebug"
-    '用于微软登录的 ClientId
+    '用于微软登录的 ClientId（从源码构建时默认为空，不内置）
     Public OAuthClientId As String = If(Environment.GetEnvironmentVariable("PCL_MS_CLIENT_ID"), "")
     'CurseForge API Key
     Public CurseForgeAPIKey As String = If(Environment.GetEnvironmentVariable("PCL_CURSEFORGE_API_KEY"), "")

@@ -1,0 +1,44 @@
+Plain Craft Launcher 2 ReBron —— 修改版源码说明
+===============================================
+
+基于官方仓库（Hex-Dragon/PCL2，即 Meloong-Git/PCL）2.99.0.0 正式版修改。
+
+【本次修改内容】
+1. 开启下载功能
+   - Plain Craft Launcher 2/Modules/ModSecret.vb
+     RestrictMcDownload: True -> False
+     原版因"为遵守相关法律法规"限制 MC 下载功能，ReBron 版已将其开启。
+     （编译产物中相关限制文案已被编译器作为死代码移除，可验证开关生效。）
+
+2. 启动器名称改为 "Plain Craft Launcher 2 ReBron"
+   - Plain Craft Launcher 2/FormMain.xaml 主窗口标题
+   - Plain Craft Launcher 2/Application.xaml.vb 单实例检测窗口名
+   - Plain Craft Launcher 2/Pages/PageOther/PageOtherAbout.xaml 关于页名称
+
+3. 跨平台（Linux）构建兼容修正，对 Windows 构建无影响
+   - PCLCS/PCLCS.csproj：OptiFineHashes.json 资源文件名大小写修正
+   - Plain Craft Launcher 2/My Project/Resources.resx：两处资源引用路径大小写修正
+   - 新增 Plain Craft Launcher 2/Directory.Build.targets：在 Linux 下使用
+     .NET SDK 自带 WindowsDesktop WPF 编译管道构建本 .NET Framework 4.8 工程
+
+【在 Linux 上重新构建】
+依赖：
+  - .NET SDK 9 及以上
+  - .NET Framework 4.8 引用程序集（NuGet 包 Microsoft.NETFramework.ReferenceAssemblies.net48，
+    解压后其 build/ 目录即为引用根路径）
+
+命令：
+  dotnet restore PCLCS/PCLCS.csproj
+  dotnet msbuild "Plain Craft Launcher 2/Plain Craft Launcher 2.vbproj" \
+      -p:Configuration=Release \
+      -p:TargetFrameworkRootPath=<net48引用包解压目录>/build/ \
+      -p:IncludePackageReferencesDuringMarkupCompilation=false
+
+产物：Plain Craft Launcher 2/bin/Plain Craft Launcher 2.exe（单文件，内嵌全部依赖）
+
+【验证说明】
+- 编译零错误零警告（仅一条缺失规则集文件的无害警告）
+- 产物内嵌 61 个 BAML 页面（与工程 Page 项数量一致）及全部依赖 DLL
+- 二进制中已无下载限制提示文案，证明下载功能开关已生效
+- 产物为 .NET Framework 4.8 WPF 程序，需在 Windows 上运行
+  （本构建环境为 Linux，无法直接运行 GUI 程序做运行级验证）

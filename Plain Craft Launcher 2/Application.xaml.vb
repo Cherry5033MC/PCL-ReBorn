@@ -39,8 +39,8 @@ Public Class Application
             '检查参数调用
             If e.Args.Length > 0 Then
                 If e.Args(0) = "--update" Then
-                    '自动更新
-                    UpdateReplace(e.Args(1), e.Args(2).Trim(""""), e.Args(3).Trim(""""), e.Args(4))
+                    '自动更新：等待旧进程退出后替换文件
+                    UpdateReplace(e.Args(1), e.Args(2).Trim(""""), e.Args(3).Trim(""""), e.Args(4) = "1")
                     Environment.Exit(ProcessReturnValues.TaskDone)
                 ElseIf e.Args(0) = "--gpu" Then
                     '调整显卡设置
@@ -134,6 +134,11 @@ RetryCacheCheck:
             Logger.Info($"第一阶段加载用时：{GetTimeMs() - ApplicationStartTick} ms")
             ApplicationStartTick = GetTimeMs()
             AniControlEnabled += 1
+            '启动器加载完成后自动检查更新（基于 GitHub Releases）
+            RunInThread(Sub()
+                            Thread.Sleep(10000) '延迟 10 秒，避免影响启动速度
+                            UpdateCheckAuto()
+                        End Sub)
         Catch ex As Exception
             Dim FilePath As String = Nothing
             Try
@@ -164,8 +169,8 @@ RetryCacheCheck:
                 End Try
             End If
             '将已有的 PCL 窗口拖出来
-            Dim WindowHwnd As IntPtr = FindWindow(Nothing, "Plain Craft Launcher　")
-            If WindowHwnd = IntPtr.Zero Then WindowHwnd = FindWindow(Nothing, "Plain Craft Launcher 2　")
+            Dim WindowHwnd As IntPtr = FindWindow(Nothing, "Plain Craft Launcher 2 ReBron　")
+            If WindowHwnd = IntPtr.Zero Then WindowHwnd = FindWindow(Nothing, "Plain Craft Launcher 2 ReBron　")
             If WindowHwnd <> IntPtr.Zero Then ShowWindowToTop(WindowHwnd)
             '播放提示音并退出
             Beep()

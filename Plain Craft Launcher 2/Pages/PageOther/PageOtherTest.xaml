@@ -7,6 +7,30 @@
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
     PanScroll="PanBack">
     <local:MyScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" x:Name="PanBack">
-        <TextBlock Text="为便于维护，开源内容中不包含百宝箱功能……" HorizontalAlignment="Center" FontSize="15" Height="30" VerticalAlignment="Center" />
+        <StackPanel x:Name="PanMain" Margin="25,10">
+
+            <local:MyCard Margin="0,15" Title="今日人品">
+                <Grid Margin="21,40,21,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="LabJrrp" Text="每天的游戏运势。试试看，今天适合肝一整天，还是适合早点睡觉？" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    <local:MyButton x:Name="BtnJrrp" Text="测一测" Grid.Column="1" Width="110" Height="35" ColorType="Highlight" Margin="15,0,0,0" />
+                </Grid>
+            </local:MyCard>
+
+            <local:MyCard Margin="0,0,0,15" Title="自定义下载">
+                <Grid Margin="21,40,21,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="输入任意文件链接，使用 PCL 的多线程下载引擎进行下载，下载进度会显示在左下角的任务栏中。" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    <local:MyButton x:Name="BtnCustomDownload" Text="新建下载" Grid.Column="1" Width="110" Height="35" Margin="15,0,0,0" />
+                </Grid>
+            </local:MyCard>
+
+        </StackPanel>
     </local:MyScrollViewer>
 </local:MyPageRight>
