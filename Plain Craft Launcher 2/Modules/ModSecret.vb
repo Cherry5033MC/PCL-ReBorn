@@ -166,11 +166,20 @@ Friend Module ModSecret
     ''' </summary>
     Private Function ParseVersionTag(Tag As String, ByRef BaseVer As Version, ByRef RebornVer As Version, ByRef PatchNum As Integer, ByRef PatchLetter As Integer) As Boolean
         Dim T As String = Tag.Trim().TrimStart("v"c, "V"c)
-        Dim BasePart As String = T, Rest As String = ""
+        Dim BasePart As String = "", Rest As String = ""
         Dim Idx As Integer = T.IndexOf("-reborn", StringComparison.OrdinalIgnoreCase)
         If Idx >= 0 Then
+            '标准格式：2.99.0.0-reborn.1.0.0.0(1.b)
             BasePart = T.Substring(0, Idx)
             Rest = T.Substring(Idx + 7).TrimStart("."c)
+        ElseIf T.StartsWith("reborn", StringComparison.OrdinalIgnoreCase) Then
+            '容错：允许省略主版本号前缀，如 reborn.1.0.0.0(1.b)，此时沿用当前版本的基础版本号
+            BasePart = VersionBaseName
+            Rest = T.Substring(6).TrimStart("."c)
+        Else
+            '纯 PCL 官方版本号格式，如 2.99.0.0
+            BasePart = T
+            Rest = ""
         End If
         Dim RebornPart As String = Rest
         PatchNum = 0 : PatchLetter = 0
@@ -185,10 +194,12 @@ Friend Module ModSecret
                 If PatchLetter < 0 Then PatchLetter = 0
             End If
         End If
-        BaseVer = Nothing
         RebornVer = New Version(0, 0, 0, 0)
-        If Not Version.TryParse(BasePart, BaseVer) Then Return False
-        Version.TryParse(RebornPart, RebornVer)
+        If Not Version.TryParse(BasePart, BaseVer) Then BaseVer = Nothing
+        If RebornPart <> "" Then Version.TryParse(RebornPart, RebornVer)
+        '主版本号与 ReBorn 版本号都解析失败时才认为无法比较
+        If BaseVer Is Nothing AndAlso RebornVer.Equals(New Version(0, 0, 0, 0)) Then Return False
+        If BaseVer Is Nothing Then BaseVer = New Version(VersionBaseName)
         Return True
     End Function
 
@@ -329,49 +340,76 @@ Friend Module ModSecret
 
     ''' <summary>
     ''' 程序退出前，若已下载新版本，则启动替换进程。
+    ''' 替换器是缓存目录中的新 exe 本身，它会在旧进程退出后覆盖旧文件，然后重新启动旧文件。
     ''' </summary>
     Public Sub UpdateRestart(TriggerRestartAndByEnd As Boolean)
         Try
             Dim NewFile As String = PathTemp & "Update\ReBorn-New.exe"
             If Not File.Exists(NewFile) Then Return
+            '参数：--update 旧进程ID 旧文件路径 新文件路径 是否重启
             Dim Args As String = $"--update {Process.GetCurrentProcess().Id} ""{PathExe}"" ""{NewFile}"" {If(TriggerRestartAndByEnd, 1, 0)}"
-            Process.Start(New ProcessStartInfo With {.FileName = NewFile, .Arguments = Args, .UseShellExecute = False})
+            Process.Start(New ProcessStartInfo With {
+                .FileName = NewFile,
+                .Arguments = Args,
+                .UseShellExecute = False,
+                .WorkingDirectory = PathUtils.RemoveLastPart(PathExe)
+            })
         Catch ex As Exception
             Logger.Error(ex, "启动更新替换进程失败")
         End Try
     End Sub
 
     ''' <summary>
-    ''' 由 --update 参数调用：等待旧进程退出后，用新文件替换旧文件，并可选重启。
+    ''' 由 --update 参数调用：等待旧进程退出后，用新文件替换旧文件，并重启旧文件。
     ''' </summary>
     Public Sub UpdateReplace(ProcessId As Integer, OldFileName As String, NewFileName As String, TriggerRestart As Boolean)
         Try
+            '1. 等待旧进程完全退出
             Try
                 Dim OldProcess = Process.GetProcessById(ProcessId)
                 If Not OldProcess.WaitForExit(60000) Then Return '旧进程长时间未退出，放弃替换
             Catch
                 '旧进程可能已经退出
             End Try
-            Thread.Sleep(500)
-            For i As Integer = 1 To 10 '重试，防止旧文件被占用
-                Try
-                    File.Copy(NewFileName, OldFileName, True)
-                    Exit For
-                Catch ex As Exception
-                    If i = 10 Then
-                        Logger.Error(ex, "替换启动器文件失败")
-                        Return
-                    End If
-                    Thread.Sleep(1000)
-                End Try
-            Next
-            '标记更新完成，下次启动时展示“更新完成”窗口
+            '2. 再等待一会儿，确保文件句柄释放
+            Thread.Sleep(1500)
+
+            '3. 记录“更新完成”标记（在替换前写，避免路径失效）
             Try
                 Dim PendingPath As String = PathTemp & "Update\Pending.cfg"
-                If File.Exists(PendingPath) Then File.WriteAllText(PathTemp & "Update\Updated.cfg", File.ReadAllText(PendingPath, Encoding.UTF8), Encoding.UTF8)
-            Catch
+                If File.Exists(PendingPath) Then
+                    File.WriteAllText(PathTemp & "Update\Updated.cfg", File.ReadAllText(PendingPath, Encoding.UTF8), Encoding.UTF8)
+                End If
+            Catch ex As Exception
+                Logger.Warn(ex, "写入更新完成标记失败")
             End Try
-            If TriggerRestart Then Process.Start(New ProcessStartInfo With {.FileName = OldFileName, .UseShellExecute = False})
+
+            '4. 覆盖旧文件（重试，防止被占用）
+            Dim Replaced As Boolean = False
+            For i As Integer = 1 To 15
+                Try
+                    File.Copy(NewFileName, OldFileName, True)
+                    Replaced = True
+                    Exit For
+                Catch ex As Exception
+                    If i = 15 Then
+                        Logger.Error(ex, "替换启动器文件失败")
+                    Else
+                        Thread.Sleep(1000)
+                    End If
+                End Try
+            Next
+
+            '5. 重新启动启动器
+            If TriggerRestart AndAlso Replaced Then
+                '给文件系统一点时间，避免新进程加载到残留内容
+                Thread.Sleep(800)
+                Process.Start(New ProcessStartInfo With {
+                    .FileName = OldFileName,
+                    .UseShellExecute = True,
+                    .WorkingDirectory = PathUtils.RemoveLastPart(OldFileName)
+                })
+            End If
         Catch ex As Exception
             Logger.Error(ex, "自动更新失败")
         End Try
