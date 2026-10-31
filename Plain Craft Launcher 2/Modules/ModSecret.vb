@@ -13,6 +13,143 @@ Friend Module ModSecret
     '用于匿名数据收集的腾讯云日志服务上报 URL，形如 https://{region}.cls.tencentcs.com/track?topic_id={topic_id}
     Public Const ClsBaseUrl As String = ""
 
+#Region "AI 日志分析"
+
+    '====================================================================
+    ' 崩溃窗口的「分析日志」按钮使用这里的配置，把日志发给 OpenAI 兼容接口。
+    ' 只有下面三项需要你自己填，其余代码不用动。
+    '====================================================================
+
+    '接口请求地址（域名部分），需要带上版本号前缀，结尾不要加斜杠。示例：
+    '  https://api.openai.com/v1
+    '  https://api.deepseek.com/v1
+    '  https://dashscope.aliyuncs.com/compatible-mode/v1
+    '  https://你的中转域名/v1
+    Public Const AiApiBaseUrl As String = ""
+
+    '接口密钥，形如 sk-xxxxxxxx。留空时会改为读取环境变量 PCL_AI_API_KEY
+    Public Const AiApiKey As String = ""
+
+    '使用的模型名称，示例：gpt-4o-mini、gpt-4.1-mini、deepseek-chat、qwen-plus
+    Public Const AiModel As String = "gpt-4o-mini"
+
+    '单次请求的最长等待时间（毫秒）。日志较长或模型较慢时可适当调大
+    Public Const AiTimeout As Integer = 100000
+
+    ''' <summary>
+    ''' 实际使用的请求地址，已去掉结尾的斜杠。
+    ''' </summary>
+    Friend ReadOnly Property AiApiBaseUrlNow As String
+        Get
+            Return If(AiApiBaseUrl, "").Trim().TrimEnd("/"c)
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' 实际使用的密钥：优先取代码内填写的值，其次取环境变量 PCL_AI_API_KEY。
+    ''' </summary>
+    Friend ReadOnly Property AiApiKeyNow As String
+        Get
+            Dim Key As String = If(AiApiKey, "").Trim()
+            If Key.Length > 0 Then Return Key
+            Return If(Environment.GetEnvironmentVariable("PCL_AI_API_KEY"), "").Trim()
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' 实际使用的模型名称，未填写时回退到 gpt-4o-mini。
+    ''' </summary>
+    Friend ReadOnly Property AiModelNow As String
+        Get
+            Dim ModelName As String = If(AiModel, "").Trim()
+            If ModelName.Length > 0 Then Return ModelName
+            Return "gpt-4o-mini"
+        End Get
+    End Property
+
+#End Region
+
+#Region "仓库地址"
+
+    '====================================================================
+    ' 双平台仓库：GitHub 为主站，Gitee 作为国内备选。
+    ' 两边的地址都写死在这里，更新与反馈会自动同时查询两个平台。
+    '====================================================================
+
+    'GitHub 仓库
+    Friend Const RepoOwnerGitHub As String = "Cherry5033MC"
+    Friend Const RepoNameGitHub As String = "PCL-ReBorn"
+
+    'Gitee 仓库
+    Friend Const RepoOwnerGitee As String = "Cherry5033MC_gitee"
+    Friend Const RepoNameGitee As String = "PCL-ReBorn"
+
+    'GitHub 相关地址
+    Friend ReadOnly Property RepoHomeGitHub As String
+        Get
+            Return "https://github.com/" & RepoOwnerGitHub & "/" & RepoNameGitHub
+        End Get
+    End Property
+    Friend ReadOnly Property RepoIssueNewGitHub As String
+        Get
+            Return RepoHomeGitHub & "/issues/new/choose"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoIssueListGitHub As String
+        Get
+            Return RepoHomeGitHub & "/issues"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoReleaseLatestGitHub As String
+        Get
+            Return RepoHomeGitHub & "/releases/latest"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoReleaseApiGitHub As String
+        Get
+            Return "https://api.github.com/repos/" & RepoOwnerGitHub & "/" & RepoNameGitHub & "/releases/latest"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoLogRawGitHub As String
+        Get
+            Return "https://raw.githubusercontent.com/" & RepoOwnerGitHub & "/" & RepoNameGitHub & "/main/UpdateLog.txt"
+        End Get
+    End Property
+
+    'Gitee 相关地址
+    Friend ReadOnly Property RepoHomeGitee As String
+        Get
+            Return "https://gitee.com/" & RepoOwnerGitee & "/" & RepoNameGitee
+        End Get
+    End Property
+    Friend ReadOnly Property RepoIssueNewGitee As String
+        Get
+            Return RepoHomeGitee & "/issues/new"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoIssueListGitee As String
+        Get
+            Return RepoHomeGitee & "/issues"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoReleaseLatestGitee As String
+        Get
+            Return RepoHomeGitee & "/releases/latest"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoReleaseApiGitee As String
+        Get
+            Return "https://gitee.com/api/v5/repos/" & RepoOwnerGitee & "/" & RepoNameGitee & "/releases/latest"
+        End Get
+    End Property
+    Friend ReadOnly Property RepoLogRawGitee As String
+        Get
+            Return "https://gitee.com/" & RepoOwnerGitee & "/" & RepoNameGitee & "/raw/main/UpdateLog.txt"
+        End Get
+    End Property
+
+#End Region
+
 #Region "网络鉴权"
 
     '已开启下载功能（ReBron 版）
@@ -146,12 +283,12 @@ Friend Module ModSecret
 
 #Region "更新"
 
-    '基于 GitHub Releases 的自动更新
-    '开源版本（正式版构建）不包含自动更新，仅快照版/开发版提供
+    '基于 GitHub / Gitee Releases 的自动更新：两站同时查询，取版本号较高的一边
+    '开源版本（源码构建）不包含自动更新，仅作者发布的成品提供
     Friend IsUpdateWaitingRestart As Boolean = False
-    Private Const UpdateApiUrl As String = "https://api.github.com/repos/Cherry5033MC/PCL-ReBorn/releases/latest"
-    Private Const UpdateLogUrl As String = "https://raw.githubusercontent.com/Cherry5033MC/PCL-ReBorn/main/UpdateLog.txt"
-    Private Const UpdateReleaseUrl As String = "https://github.com/Cherry5033MC/PCL-ReBorn/releases/latest"
+    '更新源标识，与 UpdateGetLatest 返回的 Item3 对应
+    Friend Const UpdateSourceGitHub As Integer = 0
+    Friend Const UpdateSourceGitee As Integer = 1
 
     ''' <summary>当前版本的完整标签，如 2.99.0.0-reborn.1.0.0.0(1.b)。</summary>
     Private ReadOnly Property CurrentVersionTag As String
@@ -211,44 +348,150 @@ Friend Module ModSecret
     End Function
 
     ''' <summary>
-    ''' 获取 GitHub Releases 上最新版本的信息。获取失败时抛出异常。
-    ''' 返回 (完整 Tag, 下载地址)。
+    ''' 查询单个更新源。IsGitee 为 True 时查 Gitee，否则查 GitHub。
+    ''' 返回 (完整 Tag, 下载地址, 源标识)，失败时抛出异常。
     ''' </summary>
-    Private Function UpdateGetLatest() As Tuple(Of String, String)
-        Dim Json As JObject = JObject.Parse(NetRequestByLoader(UpdateApiUrl, Timeout:=45000, IsJson:=True))
-        Dim Tag As String = Json("tag_name").ToString()
-        '寻找 .exe 附件
-        Dim DownloadUrl As String = Nothing
-        For Each Asset In Json("assets")
-            Dim Name As String = Asset("name").ToString()
-            If Name.EndsWithF(".exe", True) Then
-                DownloadUrl = Asset("browser_download_url").ToString()
-                Exit For
-            End If
-        Next
-        If DownloadUrl Is Nothing Then Throw New Exception("最新 Release 中未找到可执行文件")
-        Return New Tuple(Of String, String)(Tag, DownloadUrl)
+    Private Function UpdateQuerySource(IsGitee As Boolean) As Tuple(Of String, String, Integer)
+        Dim ApiUrl As String = If(IsGitee, RepoReleaseApiGitee, RepoReleaseApiGitHub)
+        'Gitee 在国内通常更快，给更短的超时；GitHub 留一点余量
+        Dim TimeoutMs As Integer = If(IsGitee, 8000, 10000)
+        Dim Raw As String = NetRequestByLoader(ApiUrl, Timeout:=TimeoutMs, IsJson:=True)
+        Dim Json As JObject = JObject.Parse(Raw)
+        '版本号
+        Dim TagToken As JToken = Json("tag_name")
+        Dim Tag As String = If(TagToken Is Nothing, "", TagToken.ToString().Trim())
+        If Tag = "" Then Throw New Exception("返回内容中没有版本号")
+        '在附件中寻找 .exe
+        Dim DownloadUrl As String = ""
+        Dim Assets As JToken = Json("assets")
+        If Assets IsNot Nothing Then
+            For Each Asset As JToken In Assets
+                Dim NameToken As JToken = Asset("name")
+                Dim Name As String = If(NameToken Is Nothing, "", NameToken.ToString().Trim())
+                If Name.EndsWithF(".exe", True) Then
+                    Dim UrlToken As JToken = Asset("browser_download_url")
+                    Dim Url As String = If(UrlToken Is Nothing, "", UrlToken.ToString().Trim())
+                    If Url <> "" Then
+                        DownloadUrl = Url
+                        Exit For
+                    End If
+                End If
+            Next
+        End If
+        If DownloadUrl = "" Then Throw New Exception("最新版本中没有找到 .exe 附件")
+        Return New Tuple(Of String, String, Integer)(Tag, DownloadUrl, If(IsGitee, UpdateSourceGitee, UpdateSourceGitHub))
+    End Function
+
+    ''' <summary>单个源查询的结果容器，用于并行查询时不让异常跨线程抛出。</summary>
+    Private Class UpdateQueryOutcome
+        Public Result As Tuple(Of String, String, Integer) = Nothing
+        Public ErrorMessage As String = ""
+    End Class
+
+    ''' <summary>查询单个源并把异常转成错误信息，方便并行调用。</summary>
+    Private Function UpdateQuerySafe(IsGitee As Boolean) As UpdateQueryOutcome
+        Dim Outcome As New UpdateQueryOutcome
+        Try
+            Outcome.Result = UpdateQuerySource(IsGitee)
+        Catch ex As Exception
+            Outcome.ErrorMessage = ex.Message
+            Logger.Info(If(IsGitee, "Gitee", "GitHub") & " 更新源查询失败：" & ex.Message)
+        End Try
+        Return Outcome
     End Function
 
     ''' <summary>
-    ''' 获取仓库中 UpdateLog.txt 的更新日志内容。获取失败时返回空字符串。
+    ''' 同时查询 GitHub 与 Gitee 的最新版本，返回版本号较高的一边。
+    ''' 两边版本号相同时优先 Gitee（国内访问更快）。
+    ''' 两个请求并行发出，避免国内访问 GitHub 超时拖慢 Gitee。
+    ''' 返回 (完整 Tag, 下载地址, 源标识)。
     ''' </summary>
-    Private Function GetUpdateLog() As String
+    Private Function UpdateGetLatest() As Tuple(Of String, String, Integer)
+        '并行查询
+        Dim TaskGithub As Task(Of UpdateQueryOutcome) = Task.Run(Function() UpdateQuerySafe(False))
+        Dim TaskGitee As Task(Of UpdateQueryOutcome) = Task.Run(Function() UpdateQuerySafe(True))
+        '等待结果（NetRequest 自身有超时，这里不会无限等待）
+        Dim OutcomeGithub As UpdateQueryOutcome = Nothing
+        Dim OutcomeGitee As UpdateQueryOutcome = Nothing
         Try
-            Return NetRequestByLoader(UpdateLogUrl, Timeout:=15000).Trim()
+            OutcomeGithub = TaskGithub.Result
         Catch ex As Exception
-            Logger.Info("获取更新日志失败：" & ex.Message)
-            Return ""
+            Logger.Info("等待 GitHub 查询结果失败：" & ex.Message)
         End Try
+        Try
+            OutcomeGitee = TaskGitee.Result
+        Catch ex As Exception
+            Logger.Info("等待 Gitee 查询结果失败：" & ex.Message)
+        End Try
+        '取出结果与错误信息
+        Dim GithubResult As Tuple(Of String, String, Integer) = Nothing
+        Dim GiteeResult As Tuple(Of String, String, Integer) = Nothing
+        Dim GithubError As String = "未返回结果"
+        Dim GiteeError As String = "未返回结果"
+        If OutcomeGithub IsNot Nothing Then
+            GithubResult = OutcomeGithub.Result
+            If GithubResult Is Nothing Then GithubError = If(OutcomeGithub.ErrorMessage = "", "未知错误", OutcomeGithub.ErrorMessage)
+        End If
+        If OutcomeGitee IsNot Nothing Then
+            GiteeResult = OutcomeGitee.Result
+            If GiteeResult Is Nothing Then GiteeError = If(OutcomeGitee.ErrorMessage = "", "未知错误", OutcomeGitee.ErrorMessage)
+        End If
+        '两边都失败
+        If GithubResult Is Nothing AndAlso GiteeResult Is Nothing Then
+            Throw New Exception("无法连接更新服务器。" & vbCrLf &
+                                "GitHub：" & GithubError & vbCrLf &
+                                "Gitee：" & GiteeError)
+        End If
+        '只有一边成功
+        If GithubResult Is Nothing Then Return GiteeResult
+        If GiteeResult Is Nothing Then Return GithubResult
+        '两边都成功：版本号相同优先 Gitee，否则取更高的
+        If GiteeResult.Item1 = GithubResult.Item1 Then Return GiteeResult
+        If IsVersionTagNewer(GiteeResult.Item1, GithubResult.Item1) Then Return GiteeResult
+        Return GithubResult
+    End Function
+
+    ''' <summary>
+    ''' 获取 UpdateLog.txt 的更新日志内容。优先从指定源取，失败时尝试另一个源。
+    ''' 都失败时返回空字符串。
+    ''' </summary>
+    Private Function GetUpdateLog(Source As Integer) As String
+        Dim Urls As New List(Of String)
+        If Source = UpdateSourceGitee Then
+            Urls.Add(RepoLogRawGitee)
+            Urls.Add(RepoLogRawGitHub)
+        Else
+            Urls.Add(RepoLogRawGitHub)
+            Urls.Add(RepoLogRawGitee)
+        End If
+        For Each Url As String In Urls
+            Try
+                Dim Text As String = NetRequestByLoader(Url, Timeout:=15000).Trim()
+                If Text <> "" Then Return Text
+            Catch ex As Exception
+                Logger.Info("获取更新日志失败（" & Url & "）：" & ex.Message)
+            End Try
+        Next
+        Return ""
+    End Function
+
+    ''' <summary>根据源标识返回对应的 Release 页面地址。</summary>
+    Friend Function UpdateReleaseUrlBySource(Source As Integer) As String
+        If Source = UpdateSourceGitee Then Return RepoReleaseLatestGitee
+        Return RepoReleaseLatestGitHub
     End Function
 
     Friend Sub UpdateCheckByButton()
         '非作者成品（如自行从源码构建）：不提供在线更新
         If Not IsAuthorBuild Then
-            If MyMsgBox("你正在使用 PCL ReBorn 开源版本，不包含在线更新功能。" & vbCrLf &
-                        "请前往 GitHub Releases 页面手动下载最新版本。", "检查更新", "前往 GitHub", "取消") = 1 Then
-                OpenWebsite(UpdateReleaseUrl)
-            End If
+            Dim Message As String = "你正在使用 PCL ReBorn 开源版本，不包含在线更新功能。" & vbCrLf &
+                                    "请前往发布页面手动下载最新版本。"
+            Select Case MyMsgBox(Message, "检查更新", "GitHub", "Gitee", "取消")
+                Case 1
+                    OpenWebsite(RepoReleaseLatestGitHub)
+                Case 2
+                    OpenWebsite(RepoReleaseLatestGitee)
+            End Select
             Return
         End If
         RunInThread(Sub()
@@ -259,9 +502,10 @@ Friend Module ModSecret
                                 MyMsgBox($"你的 PCL 已经是最新版本（{CurrentVersionTag}）！", "检查更新")
                                 Return
                             End If
-                            Dim LogText As String = GetUpdateLog()
+                            Dim LogText As String = GetUpdateLog(Latest.Item3)
                             If LogText.Length > 300 Then LogText = LogText.Substring(0, 300) & "……"
-                            If MyMsgBox($"发现新版本 {Latest.Item1}（当前版本 {CurrentVersionTag}）！{vbCrLf}{vbCrLf}{LogText}{vbCrLf}{vbCrLf}是否立即下载更新？",
+                            Dim SourceName As String = If(Latest.Item3 = UpdateSourceGitee, "Gitee", "GitHub")
+                            If MyMsgBox($"发现新版本 {Latest.Item1}（当前版本 {CurrentVersionTag}，来自 {SourceName}）！{vbCrLf}{vbCrLf}{LogText}{vbCrLf}{vbCrLf}是否立即下载更新？",
                                         "更新", "立即下载", "取消") = 2 Then Return
                             UpdateDownload()
                         Catch ex As Exception
@@ -276,13 +520,14 @@ Friend Module ModSecret
     ''' </summary>
     Friend Sub UpdateCheckAuto()
         If Not IsAuthorBuild Then
-            Hint("你正在使用 PCL ReBorn 开源版本，更新与反馈请前往 GitHub 仓库", HintType.Blue)
+            Hint("你正在使用 PCL ReBorn 开源版本，更新与反馈请前往仓库页面", HintType.Blue)
             Return
         End If
         Try
             Dim Latest = UpdateGetLatest()
             If Not IsVersionTagNewer(Latest.Item1, CurrentVersionTag) Then Return
-            Hint("发现新版本 " & Latest.Item1 & "，可在设置或关于页面中更新", HintType.Blue)
+            Dim SourceName As String = If(Latest.Item3 = UpdateSourceGitee, "Gitee", "GitHub")
+            Hint("发现新版本 " & Latest.Item1 & "（来自 " & SourceName & "），可在设置或关于页面中更新", HintType.Blue)
             '设置为“有新版本时自动下载”时自动开始下载
             If Settings.Get(Of Integer)("SystemSystemUpdate") = 3 Then UpdateDownload()
         Catch ex As Exception
@@ -299,8 +544,9 @@ Friend Module ModSecret
                             Dim Latest = UpdateGetLatest()
                             Dim LocalPath As String = PathTemp & "Update\ReBorn-New.exe"
                             DirectoryUtils.Create(PathTemp & "Update\")
-                            '记录待更新版本与仓库更新日志，供替换成功后展示“更新完成”窗口
-                            File.WriteAllText(PathTemp & "Update\Pending.cfg", Latest.Item1 & vbCrLf & GetUpdateLog(), Encoding.UTF8)
+                            '记录待更新版本、来源与仓库更新日志，供替换成功后展示“更新完成”窗口
+                            Dim PendingText As String = Latest.Item1 & vbCrLf & GetUpdateLog(Latest.Item3) & vbCrLf & "#source=" & Latest.Item3
+                            File.WriteAllText(PathTemp & "Update\Pending.cfg", PendingText, Encoding.UTF8)
                             Hint("已开始下载新版本……")
                             Dim InnerLoader As New LoaderDownload("下载新版本", New List(Of NetFile) From {New NetFile({Latest.Item2}, LocalPath)})
                             Dim Loader As New LoaderCombo(Of Integer)("ReBorn 更新", New List(Of LoaderBase) From {InnerLoader})
@@ -415,14 +661,25 @@ Friend Module ModSecret
             File.Delete(FlagPath) '只展示一次
             Dim Lines As String() = Content.Split(New String() {vbCrLf, vbLf, vbCr}, StringSplitOptions.None)
             Dim NewVersion As String = If(Lines.Length > 0, Lines(0).Trim(), "")
-            Dim LogText As String = If(Lines.Length > 1, String.Join(vbCrLf, Lines.Skip(1)).Trim(), "")
+            '末尾可能带有 #source= 标记，取出后从日志正文里剔除
+            Dim Source As Integer = UpdateSourceGitHub
+            Dim LogLines As New List(Of String)
+            For i As Integer = 1 To Lines.Length - 1
+                Dim Line As String = Lines(i).Trim()
+                If Line.StartsWith("#source=") Then
+                    Integer.TryParse(Line.Substring(8).Trim(), Source)
+                Else
+                    LogLines.Add(Lines(i))
+                End If
+            Next
+            Dim LogText As String = String.Join(vbCrLf, LogLines).Trim()
             If LogText.Length > 600 Then LogText = LogText.Substring(0, 600) & "……"
             Dim Message As String = "PCL ReBorn 已成功更新到 " & NewVersion & "！" & vbCrLf
             If LogText <> "" Then Message &= vbCrLf & "本次更新内容（点击下方按钮可打开 Release 页面查看完整日志）：" & vbCrLf & LogText & vbCrLf
             Message &= vbCrLf & "感谢你对 PCL ReBorn 的支持！"
             Select Case MyMsgBox(Message, "更新完成", "太好了", "查看完整日志")
                 Case 2
-                    OpenWebsite(UpdateReleaseUrl)
+                    OpenWebsite(UpdateReleaseUrlBySource(Source))
             End Select
         Catch ex As Exception
             Logger.Error(ex, "展示更新完成窗口失败")
