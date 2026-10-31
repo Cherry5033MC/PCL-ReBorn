@@ -131,12 +131,13 @@ Public Class PageOtherLeft
         e.Handled = True
     End Sub
     Public Shared Sub TryFeedback()
-        Select Case MyMsgBox("在提交新反馈前，建议先搜索 Issue 列表，以避免重复提交。" & vbCrLf & "反馈将通过 GitHub Issue 提交，如果无法打开该网页，请使用 VPN 改善网络环境。",
-                    "反馈", "提交新 Issue", "查看 Issue 列表", "取消")
+        Dim Message As String = "在提交新反馈前，建议先搜索 Issue 列表，以避免重复提交。" & vbCrLf &
+                                "GitHub 与 Gitee 的 Issue 是分开的，请选择你方便访问的站点。"
+        Select Case MyMsgBox(Message, "反馈", "GitHub", "Gitee", "取消")
             Case 1
-                OpenWebsite("https://github.com/Cherry5033MC/PCL-ReBorn/issues/new/choose")
+                OpenWebsite(RepoIssueNewGitHub)
             Case 2
-                OpenWebsite("https://github.com/Cherry5033MC/PCL-ReBorn/issues")
+                OpenWebsite(RepoIssueNewGitee)
         End Select
     End Sub
 
