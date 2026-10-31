@@ -7,8 +7,8 @@ Public Module ModBase
 
     '下列版本信息由更新器自动修改
     Public Const VersionBaseName As String = "2.99.0.0" '主版本号：基于的 PCL 原版版本
-    Public Const VersionReBorn As String = "reborn.1.0.0.0" 'ReBorn 修订版本号
-    Public Const VersionPatchTag As String = "(1.c)" '次版本号：数字越大 ReBorn 版本越高，字母为该发行版经过的补丁次数
+    Public Const VersionReBorn As String = "reborn.1.1.0.0" 'ReBorn 修订版本号
+    Public Const VersionPatchTag As String = "(2.a)" '次版本号：数字越大 ReBorn 版本越高，字母为该发行版经过的补丁次数
     Public Const CommitHash As String = "" 'Commit Hash，由 GitHub Workflow 自动替换
 #If RELEASE Then
     Public Const VersionCode As Integer = 413 '正式版
@@ -17,7 +17,7 @@ Public Module ModBase
 #End If
 
     '版本信息
-    Public Const VersionFullTag As String = VersionBaseName & "-" & VersionReBorn & VersionPatchTag '完整版本标签，如 2.99.0.0-reborn.1.0.0.0(1.b)
+    Public Const VersionFullTag As String = VersionBaseName & "-" & VersionReBorn & VersionPatchTag '完整版本标签，如 2.99.0.0-reborn.1.1.0.0(2.a)
     '显示用版本类型：作者发布的成品显示“正式版”，从源码构建的显示“开源版”
     Public Const BuildTypeDisplay As String = If(IsAuthorBuild, "正式版", "开源版")
     Public Const VersionDisplay As String = BuildTypeDisplay & " " & VersionBaseName & " " & VersionReBorn & VersionPatchTag
