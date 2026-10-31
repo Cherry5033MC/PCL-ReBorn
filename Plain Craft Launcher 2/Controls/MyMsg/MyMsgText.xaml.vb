@@ -10,6 +10,7 @@ Public Class MyMsgText
             Btn1.Name = Btn1.Name & GetUuid()
             Btn2.Name = Btn2.Name & GetUuid()
             Btn3.Name = Btn3.Name & GetUuid()
+            Btn4.Name = Btn4.Name & GetUuid()
             MyConverter = Converter
             LabTitle.Text = Converter.Title
             LabCaption.Text = Converter.Text
@@ -20,8 +21,10 @@ Public Class MyMsgText
             End If
             Btn2.Text = Converter.Button2
             Btn3.Text = Converter.Button3
+            Btn4.Text = Converter.Button4
             Btn2.Visibility = If(Converter.Button2 = "", Visibility.Collapsed, Visibility.Visible)
             Btn3.Visibility = If(Converter.Button3 = "", Visibility.Collapsed, Visibility.Visible)
+            Btn4.Visibility = If(Converter.Button4 = "", Visibility.Collapsed, Visibility.Visible)
             ShapeLine.StrokeThickness = GetWPFSize(1)
 
         Catch ex As Exception
@@ -96,6 +99,16 @@ Public Class MyMsgText
         Else
             MyConverter.IsExited = True
             MyConverter.Result = 3
+            Close()
+        End If
+    End Sub
+    Public Sub Btn4_Click() Handles Btn4.Click
+        If MyConverter.IsExited Then Return
+        If MyConverter.Button4Action IsNot Nothing Then
+            MyConverter.Button4Action()
+        Else
+            MyConverter.IsExited = True
+            MyConverter.Result = 4
             Close()
         End If
     End Sub
