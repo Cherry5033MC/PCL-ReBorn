@@ -39,15 +39,9 @@ Public Class Application
             '检查参数调用
             If e.Args.Length > 0 Then
                 If e.Args(0) = "--update" Then
-                    '自动更新：本进程仅作为替换器运行，不创建任何窗口
-                    '必须完全同步执行，并在完成后立即退出
-                    Try
-                        UpdateReplace(Integer.Parse(e.Args(1)), e.Args(2).Trim(""""), e.Args(3).Trim(""""), e.Args.Length > 4 AndAlso e.Args(4).Trim() = "1")
-                    Catch ex As Exception
-                        '替换器无法写日志（此时目录可能已变），错误通过退出码反馈
-                    End Try
+                    '自动更新：等待旧进程退出后替换文件
+                    UpdateReplace(e.Args(1), e.Args(2).Trim(""""), e.Args(3).Trim(""""), e.Args(4) = "1")
                     Environment.Exit(ProcessReturnValues.TaskDone)
-                    Return
                 ElseIf e.Args(0) = "--gpu" Then
                     '调整显卡设置
                     Try
@@ -140,8 +134,9 @@ RetryCacheCheck:
             Logger.Info($"第一阶段加载用时：{GetTimeMs() - ApplicationStartTick} ms")
             ApplicationStartTick = GetTimeMs()
             AniControlEnabled += 1
-            '启动器加载完成后自动检查更新（基于 GitHub Releases）
+            '启动器加载完成后自动检查更新（GitHub 与 Gitee 双源）
             RunInThread(Sub()
+                            UpdateDoneShow() '若刚完成过更新，先展示“更新完成”窗口
                             Thread.Sleep(10000) '延迟 10 秒，避免影响启动速度
                             UpdateCheckAuto()
                         End Sub)
