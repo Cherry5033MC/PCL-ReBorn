@@ -301,6 +301,26 @@ Extracted:
         Return Result
     End Function
     ''' <summary>
+    ''' 获取用于外部（例如 AI 分析）的完整日志文本。
+    ''' 应在 Prepare 之后调用；若尚未准备完成，返回空字符串。
+    ''' </summary>
+    Public Function GetAiLogText() As String
+        Dim Parts As New List(Of String)
+        If Not String.IsNullOrWhiteSpace(LogCrash) Then
+            Parts.Add("===== Minecraft 崩溃报告（crash-report）=====" & vbCrLf & LogCrash)
+        End If
+        If Not String.IsNullOrWhiteSpace(LogHs) Then
+            Parts.Add("===== JVM 崩溃日志（hs_err）=====" & vbCrLf & LogHs)
+        End If
+        If Not String.IsNullOrWhiteSpace(LogMc) Then
+            Parts.Add("===== 游戏日志（latest.log 等）=====" & vbCrLf & LogMc)
+        End If
+        If Not String.IsNullOrWhiteSpace(LogMcDebug) Then
+            Parts.Add("===== 游戏 Debug 日志 =====" & vbCrLf & LogMcDebug)
+        End If
+        Return Parts.Join(vbCrLf & vbCrLf)
+    End Function
+    ''' <summary>
     ''' 输出字符串的前后某些行，并统一行尾为 vbLf (正则 \n)、删除空行和重复行。
     ''' </summary>
     Private Function GetHeadTailLines(Raw As String(), HeadLines As Integer, TailLines As Integer) As String
@@ -874,7 +894,8 @@ NextStack:
                     FileUtils.Write(FilePath, DirectFile.Value.Value.Join(vbCrLf))
                     StartProcess(FilePath)
                 End If
-            End Sub))
+            End Sub),
+            Button4:="分析日志")
             Case 3
                 '弹窗选择：导出错误报告
                 Dim FileAddress As String = Nothing
@@ -916,6 +937,9 @@ NextStack:
                     Logger.Error(ex, "导出错误报告失败")
                     Return
                 End Try
+            Case 4
+                '弹窗选择：交给 AI 分析日志
+                ModAi.AnalyzeCrash(GetAiLogText(), If(IsManualAnalyze, Nothing, Detail), TargetInstance)
         End Select
         '上报
         If IsManualAnalyze Then Return
