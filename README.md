@@ -31,7 +31,7 @@ Plain Craft Launcher 2 ReBron（下称 ReBron）是 PCL2 的修改版，在官�
 
 前往 [Releases](../../releases) 页面下载最新的 `Plain Craft Launcher 2.exe`。
 
-- 系统要求：Windows 10 及以上（这是只是暂时的）
+- 系统要求：Windows 10 及以上（这只是暂时的）
 - 运行环境：.NET Framework 4.8（Win10 1903+ 已内置，低版本系统首次运行会引导安装）
 - 单文件、免安装，放到任意有写权限的目录运行即可
 
