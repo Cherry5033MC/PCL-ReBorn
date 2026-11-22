@@ -33,7 +33,8 @@ Friend Module ModSecret
     Public Const AiApiKey As String = ""
 
     '使用的模型名称，示例：gpt-4o-mini、gpt-4.1-mini、deepseek-chat、qwen-plus
-    Public Const AiModel As String = "agnes-2.5-flash"
+    '留空时回退到 gpt-4o-mini
+    Public Const AiModel As String = ""
 
     '单次请求的最长等待时间（毫秒）。日志较长或模型较慢时可适当调大
     Public Const AiTimeout As Integer = 100000
