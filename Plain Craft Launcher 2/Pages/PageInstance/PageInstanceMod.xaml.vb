@@ -160,6 +160,9 @@ Public Class PageInstanceMod
         ' 顶部栏
         '-----------------
 
+        '按钮可用性：未开启版本隔离时，无法判断前置属于哪个版本，因此不能补全前置
+        BtnManageComplete.IsEnabled = IsIndieEnabled()
+
         '计数
         Dim AnyCount As Integer = 0
         Dim EnabledCount As Integer = 0
@@ -339,6 +342,92 @@ Install:
         PageResource.TargetName = SearchBox.Text
         FrmMain.PageChange(FormMain.PageType.Download, FormMain.PageSubType.DownloadMod)
     End Sub
+
+    ''' <summary>
+    ''' 补全前置：检查已安装 Mod 缺失的前置，并下载到当前版本的 Mods 文件夹。
+    ''' </summary>
+    Private Sub BtnManageComplete_Click(sender As Object, e As MouseButtonEventArgs) Handles BtnManageComplete.Click
+        Dim TargetInstance As McInstance = PageInstanceLeft.Instance
+        If TargetInstance Is Nothing Then Return
+        If Not IsIndieEnabled() Then
+            Hint("未开启版本隔离时，多个 MC 版本会共用同一个 Mod 文件夹，无法判断前置属于哪个版本。请在 版本设置 → 设置 中开启版本隔离后再试！")
+            Return
+        End If
+        If Not TargetInstance.Modable Then
+            Hint("由于当前版本不能安装 Mod，因此无需补全前置！")
+            Return
+        End If
+        If LocalResourceLoader.State <> LoadState.Finished Then
+            Hint("请等待 Mod 列表加载完成后再试！")
+            Return
+        End If
+        '收集已经识别到版本信息的 Mod，按来源平台分组
+        Dim Sources As New Dictionary(Of ResourcePlatforms, List(Of ResourceVersion))
+        For Each Entry As LocalResourceFile In LocalResourceLoader.Output
+            If Entry Is Nothing OrElse Entry.Project Is Nothing OrElse Entry.ProjectVersion Is Nothing Then Continue For
+            Dim Platform As ResourcePlatforms = Entry.Project.Platform
+            If Not Sources.ContainsKey(Platform) Then Sources(Platform) = New List(Of ResourceVersion)
+            If Not Sources(Platform).Contains(Entry.ProjectVersion) Then Sources(Platform).Add(Entry.ProjectVersion)
+        Next
+        If Not Sources.Any() Then
+            Hint("没有识别到任何 Mod 的前置信息，请稍后再试！", HintType.Red)
+            Return
+        End If
+        Hint("正在检查 Mod 前置……")
+        Logger.Info($"开始检查 {Sources.Sum(Function(s) s.Value.Count)} 个 Mod 的前置")
+        RunInNewThread(
+        Sub()
+            Try
+                '检查所有 Mod 缺失的前置
+                Dim Items As New List(Of ModDependency.DependencyItem)
+                For Each Pair As KeyValuePair(Of ResourcePlatforms, List(Of ResourceVersion)) In Sources
+                    Items.AddRange(ModDependency.FindMissingDependencies(Pair.Value, Pair.Key, TargetInstance))
+                Next
+                If Not Items.Any() Then
+                    Hint("没有发现缺失的前置！", HintType.Green)
+                    Return
+                End If
+                '确认后开始下载
+                If Not ModDependency.ConfirmDependencyDownload(Items) Then Return
+                Dim Files As List(Of NetFile) = ModDependency.BuildDependencyNetFiles(Items, TargetInstance.PathIndie & "mods\")
+                If Not Files.Any() Then
+                    Hint("没有可以下载的前置文件！", HintType.Red)
+                    Return
+                End If
+                RunInUi(
+                Sub()
+                    Dim DownloadLoader As New LoaderDownload("下载前置文件", Files) With {.ProgressWeight = Files.Count * 1.5}
+                    Dim Loader As New LoaderCombo(Of Integer)("补全前置：" & TargetInstance.Name, New List(Of LoaderBase) From {DownloadLoader}) With {.OnStateChanged =
+                    Sub(MyLoader)
+                        LoaderStateChangedHintOnly(MyLoader)
+                        If MyLoader.State = LoadState.Finished Then ReloadModList(True)
+                    End Sub}
+                    Loader.Start(1)
+                    LoaderTaskbarAdd(Loader)
+                    FrmMain.BtnExtraDownload.ShowRefresh()
+                    FrmMain.BtnExtraDownload.Ribble()
+                End Sub)
+            Catch ex As Exception
+                Logger.Warn(ex, "补全 Mod 前置失败")
+                Hint("补全 Mod 前置失败：" & ex.Message, HintType.Red)
+            End Try
+        End Sub, "Complete Mod Dependency")
+    End Sub
+
+    ''' <summary>
+    ''' 当前版本是否开启了版本隔离。
+    ''' 未开启时多个版本共用同一个 Mods 文件夹，无法判断某个前置属于哪个版本，因此不能补全前置。
+    ''' </summary>
+    Private Function IsIndieEnabled() As Boolean
+        Try
+            Dim TargetInstance As McInstance = PageInstanceLeft.Instance
+            If TargetInstance Is Nothing Then Return False
+            Return PathUtils.IsSame(TargetInstance.PathIndie, TargetInstance.PathVersion)
+        Catch ex As Exception
+            Logger.Warn(ex, "获取版本隔离设置失败")
+            Return False
+        End Try
+    End Function
 
 #End Region
 

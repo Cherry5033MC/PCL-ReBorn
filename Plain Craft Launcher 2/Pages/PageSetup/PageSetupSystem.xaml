@@ -157,6 +157,54 @@
                 </Grid>
             </local:MyCard>
 
+            <local:MyCard Margin="0,0,0,15" Title="AI 日志分析">
+                <StackPanel Margin="25,37,25,15">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Name" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="8" />
+                            <RowDefinition Height="28" />
+                            <RowDefinition Height="35" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Text="密钥来源" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboAiKeyMode" Grid.Column="1" local:SettingService.Key="AiKeyMode"
+                                          ToolTip="公共密钥使用启动器内置的接口地址、密钥与模型，开箱即用。&#xa;自定义密钥使用你自己填写的接口地址与 API Key，并从接口获取的模型列表中挑选一个模型。">
+                            <local:MyComboBoxItem Content="公共密钥" />
+                            <local:MyComboBoxItem Content="自定义密钥" />
+                        </local:MyComboBox>
+                        <TextBlock Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Left" Text="接口地址" Margin="0,0,25,0" />
+                        <local:MyTextBox x:Name="TextAiApiBaseUrl" Grid.Row="2" Grid.Column="1" local:SettingService.Key="AiApiBaseUrl"
+                                         HintText="https://api.openai.com/v1"
+                                         ToolTip="OpenAI 兼容接口的地址，需要带版本号前缀，程序会自动拼上 /chat/completions。&#xa;示例：https://api.openai.com/v1、https://api.deepseek.com/v1" />
+                        <TextBlock Grid.Row="4" VerticalAlignment="Center" HorizontalAlignment="Left" Text="API Key" Margin="0,0,25,0" />
+                        <Grid Grid.Row="4" Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="TextAiApiKey" Grid.Column="0" Height="28" VerticalAlignment="Center"
+                                         local:SettingService.Key="AiApiKey"
+                                         ToolTip="密钥会加密保存在本机，且重新进入本页时不会显示原文。&#xa;输入框留空表示沿用已保存的密钥；如需彻底清除，请点击左侧的「初始化本页设置」。" />
+                            <TextBlock x:Name="LabAiKeyState" Grid.Column="1" VerticalAlignment="Center" Margin="10,0,0,0" Opacity="0.6" />
+                        </Grid>
+                        <TextBlock Grid.Row="6" VerticalAlignment="Center" HorizontalAlignment="Left" Text="模型" Margin="0,0,25,0" />
+                        <local:MyComboBox x:Name="ComboAiModel" Grid.Row="6" Grid.Column="1"
+                                          ToolTip="从接口获取到的可用模型列表，只能选择一个。" />
+                        <local:MyButton x:Name="BtnAiModelRefresh" Grid.Row="7" Grid.ColumnSpan="2" MinWidth="140" Height="28" Margin="0,7,0,0"
+                                        HorizontalAlignment="Left" VerticalAlignment="Top" Text="刷新模型列表" Padding="13,0" />
+                        <TextBlock x:Name="LabAiHint" Grid.Row="8" Grid.ColumnSpan="2" Margin="0,8,0,0" TextWrapping="Wrap" Opacity="0.6" />
+                    </Grid>
+                </StackPanel>
+            </local:MyCard>
             <!-- <local:MyCard x:Name="CardMain" Margin="0,15" Title="全局设置">
                 <StackPanel Margin="25,40,25,15">
                     <Grid x:Name="PanMainLang" Height="28" Margin="0,0,0,10" Visibility="Collapsed">

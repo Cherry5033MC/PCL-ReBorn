@@ -106,6 +106,15 @@ Public Class ResourceVersion
     ''' 作为该版本依赖项的项目 ID。
     ''' </summary>
     Public Dependencies As New List(Of String)
+    ''' <summary>
+    ''' 该版本声明的所有前置的项目 ID，包含可能尚未获取工程信息的项。
+    ''' 用于自动补全前置时判断该版本需要哪些前置。
+    ''' </summary>
+    Public ReadOnly Property DependencyIds As List(Of String)
+        Get
+            Return RawDependencies.Concat(Dependencies).Distinct().ToList()
+        End Get
+    End Property
 
     '初始化
 

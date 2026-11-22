@@ -214,6 +214,7 @@
     <Compile Include="Modules\Resource\LocalResourceFile.vb" />
     <Compile Include="Modules\Resource\ResourceProject.vb" />
     <Compile Include="Modules\Resource\ResourceVersion.vb" />
+    <Compile Include="Modules\Resource\ModDependency.vb" />
     <Compile Include="Modules\Resource\ResourceSearcher.vb" />
     <Compile Include="Modules\Minecraft\ModJava.vb" />
     <Compile Include="Modules\Resource\LocalResourceLoaders.vb" />

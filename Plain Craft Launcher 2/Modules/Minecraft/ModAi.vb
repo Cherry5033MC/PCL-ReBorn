@@ -1,7 +1,8 @@
 ''' <summary>
 ''' AI 崩溃日志分析。
 ''' 把崩溃日志与提示词发送到 OpenAI 兼容的 Chat Completions 接口，并把结果展示给用户。
-''' 接口地址、密钥与模型名称在 ModSecret.vb 的「AI 日志分析」区域中填写。
+''' 使用的接口地址、密钥与模型可以在 设置 → 其他 → AI 日志分析 中选择：
+''' 使用 ModSecret.vb 中的公共配置，或填写自己的密钥、地址并挑选模型。
 ''' </summary>
 Public Module ModAi
 
@@ -42,15 +43,21 @@ Public Module ModAi
         Try
             '检查配置
             If AiApiBaseUrlNow.Length = 0 Then
-                ShowTip("尚未填写接口地址，无法进行 AI 分析。" & vbCrLf & vbCrLf &
-                        "请打开 Modules\ModSecret.vb，找到「AI 日志分析」区域，填写 AiApiBaseUrl" & vbCrLf &
-                        "（例如 https://api.openai.com/v1），然后重新编译。", True)
+                ShowTip("尚未配置 AI 接口地址，无法进行 AI 分析。" & vbCrLf & vbCrLf &
+                        "请打开 设置 → 其他 → AI 日志分析，选择「自定义密钥」并填写接口地址" & vbCrLf &
+                        "（例如 https://api.openai.com/v1），保存后即可使用。", True)
                 Return
             End If
             If AiApiKeyNow.Length = 0 Then
-                ShowTip("尚未填写接口密钥，无法进行 AI 分析。" & vbCrLf & vbCrLf &
-                        "请打开 Modules\ModSecret.vb，找到「AI 日志分析」区域，填写 AiApiKey（形如 sk-xxxx），" & vbCrLf &
-                        "或者设置环境变量 PCL_AI_API_KEY，然后重新编译。", True)
+                ShowTip("尚未配置 AI 密钥，无法进行 AI 分析。" & vbCrLf & vbCrLf &
+                        "请打开 设置 → 其他 → AI 日志分析，选择「自定义密钥」并填写 API Key" & vbCrLf &
+                        "（形如 sk-xxxx），保存后即可使用。", True)
+                Return
+            End If
+            If AiModelNow.Length = 0 Then
+                ShowTip("尚未选择 AI 模型，无法进行 AI 分析。" & vbCrLf & vbCrLf &
+                        "请打开 设置 → 其他 → AI 日志分析，填写接口地址与 API Key 后，" & vbCrLf &
+                        "在「模型」下拉框中选择一个模型。", True)
                 Return
             End If
             If String.IsNullOrWhiteSpace(LogText) Then
@@ -93,6 +100,51 @@ Public Module ModAi
 #End Region
 
 #Region "请求与解析"
+
+    ''' <summary>
+    ''' 获取接口可用的模型列表，用于让用户在设置中选择。失败时抛出异常。
+    ''' </summary>
+    ''' <param name="ApiBaseUrl">接口地址，程序会自动拼上 /models。</param>
+    ''' <param name="ApiKey">接口密钥。</param>
+    ''' <param name="Timeout">请求超时时间，单位为毫秒。</param>
+    Public Function FetchModelList(ApiBaseUrl As String, ApiKey As String, Optional Timeout As Integer = 20000) As List(Of String)
+        If String.IsNullOrWhiteSpace(ApiBaseUrl) Then Throw New Exception("尚未填写接口地址。")
+        Dim Url As String = ApiBaseUrl.Trim().TrimEnd("/"c) & "/models"
+        Logger.Info($"正在获取 AI 模型列表：{Url}")
+        Dim Headers As String(,) = {{"Authorization", "Bearer " & If(ApiKey, "").Trim()}}
+        Dim Raw As String = NetRequestByClient(Url, HttpMethod.Get, Nothing, Nothing, "application/json",
+                                               Timeout, Headers, RequireJson:=True)
+        '解析返回内容，兼容常见的几种格式
+        Dim Token As JToken = JToken.Parse(Raw)
+        Dim Items As IEnumerable(Of JToken)
+        If Token.Type = JTokenType.Array Then
+            Items = Token.Children()
+        ElseIf Token("data") IsNot Nothing Then
+            Items = Token("data").Children()
+        ElseIf Token("models") IsNot Nothing Then
+            Items = Token("models").Children()
+        Else
+            Throw New Exception("接口返回的模型列表格式无法识别：" & vbCrLf & ClipText(Raw, 500))
+        End If
+        Dim Result As New List(Of String)
+        For Each Item As JToken In Items
+            Dim ModelId As String = Nothing
+            If Item.Type = JTokenType.String Then
+                ModelId = Item.ToString()
+            ElseIf Item("id") IsNot Nothing Then
+                ModelId = Item("id").ToString()
+            ElseIf Item("name") IsNot Nothing Then
+                ModelId = Item("name").ToString()
+            End If
+            If String.IsNullOrWhiteSpace(ModelId) Then Continue For
+            ModelId = ModelId.Trim()
+            If Not Result.Contains(ModelId) Then Result.Add(ModelId)
+        Next
+        If Not Result.Any() Then Throw New Exception("接口没有返回任何可用模型，请检查密钥是否有调用权限。")
+        Result.Sort()
+        Logger.Info($"获取到 {Result.Count} 个可用模型：{Result.Join("，")}")
+        Return Result
+    End Function
 
     ''' <summary>
     ''' 组装提示词并请求接口，返回 AI 的回答正文。失败时抛出异常。
@@ -286,13 +338,13 @@ Public Module ModAi
             Select Case Code
                 Case 400
                     Message = "接口认为请求参数有误（HTTP 400）。" & vbCrLf &
-                              "常见原因：AiModel 填写的模型名不存在，或日志太长超出了该模型的上下文长度。" & vbCrLf & vbCrLf & Message
+                              "常见原因：模型名不存在（可在 设置 → 其他 → AI 日志分析 中重新选择模型），或日志太长超出了该模型的上下文长度。" & vbCrLf & vbCrLf & Message
                 Case 401, 403
                     Message = "接口拒绝了这次请求（HTTP " & Code & "）。" & vbCrLf &
-                              "常见原因：AiApiKey 无效、已过期，或该密钥没有调用此模型的权限。" & vbCrLf & vbCrLf & Message
+                              "常见原因：API Key 无效、已过期，或该密钥没有调用此模型的权限。" & vbCrLf & vbCrLf & Message
                 Case 404
                     Message = "接口地址不存在（HTTP 404）。" & vbCrLf &
-                              "请检查 ModSecret.vb 里的 AiApiBaseUrl，一般需要以 /v1 结尾，程序会自动拼上 /chat/completions。" & vbCrLf & vbCrLf & Message
+                              "请检查 设置 → 其他 → AI 日志分析 中的接口地址，一般需要以 /v1 结尾，程序会自动拼上 /chat/completions。" & vbCrLf & vbCrLf & Message
                 Case 429
                     Message = "请求过于频繁或额度不足（HTTP 429），请稍后再试，或检查账户余额。" & vbCrLf & vbCrLf & Message
                 Case Else

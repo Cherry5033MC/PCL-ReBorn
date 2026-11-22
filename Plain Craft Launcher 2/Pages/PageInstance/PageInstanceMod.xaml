@@ -20,8 +20,10 @@
                             </Grid.ColumnDefinitions>
                             <local:MyButton x:Name="BtnManageOpen" Grid.Column="0" MinWidth="110" Text="打开文件夹" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left" ColorType="Highlight" />
                             <local:MyButton x:Name="BtnManageInstall" Grid.Column="1" MinWidth="110" Text="从文件安装" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left" />
-                            <local:MyButton x:Name="BtnManageDownload" Grid.Column="2" MinWidth="110" Text="下载新 Mod" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left" />
-                            <local:MyButton x:Name="BtnManageSelectAll" Grid.Column="3" MinWidth="110" Text="全选" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left" />
+                            <local:MyButton x:Name="BtnManageComplete" Grid.Column="2" MinWidth="110" Text="补全前置" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left"
+                                            ToolTip="检查已安装 Mod 缺失的前置并下载。未开启版本隔离时无法判断前置属于哪个版本，因此不可用。" ToolTipService.ShowOnDisabled="True" />
+                            <local:MyButton x:Name="BtnManageDownload" Grid.Column="3" MinWidth="110" Text="下载新 Mod" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left" />
+                            <local:MyButton x:Name="BtnManageSelectAll" Grid.Column="4" MinWidth="110" Text="全选" Padding="13,0" Margin="0,0,15,0" HorizontalAlignment="Left" />
                         </Grid>
                     </local:MyCard>
                     <local:MyCard x:Name="PanListBack" VerticalAlignment="Top" Opacity="0" Margin="0,0,0,14" Title=" " MinHeight="55">

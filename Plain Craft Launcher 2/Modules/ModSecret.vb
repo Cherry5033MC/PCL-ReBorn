@@ -17,7 +17,9 @@ Friend Module ModSecret
 
     '====================================================================
     ' 崩溃窗口的「分析日志」按钮使用这里的配置，把日志发给 OpenAI 兼容接口。
-    ' 只有下面三项需要你自己填，其余代码不用动。
+    ' 这里的地址、密钥与模型是「公共密钥」模式的默认值；
+    ' 用户在 设置 → 其他 → AI 日志分析 中选择「自定义密钥」后，
+    ' 会改用用户自己填写的地址、密钥与模型，下面的常量不再生效。
     '====================================================================
 
     '接口请求地址（域名部分），需要带上版本号前缀，结尾不要加斜杠。示例：
@@ -31,25 +33,55 @@ Friend Module ModSecret
     Public Const AiApiKey As String = ""
 
     '使用的模型名称，示例：gpt-4o-mini、gpt-4.1-mini、deepseek-chat、qwen-plus
-    Public Const AiModel As String = "gpt-4o-mini"
+    Public Const AiModel As String = "agnes-2.5-flash"
 
     '单次请求的最长等待时间（毫秒）。日志较长或模型较慢时可适当调大
     Public Const AiTimeout As Integer = 100000
 
     ''' <summary>
+    ''' 是否使用设置中填写的自定义密钥（设置项 AiKeyMode 为 1）。
+    ''' </summary>
+    Friend ReadOnly Property AiUseCustomKey As Boolean
+        Get
+            Try
+                Return Settings.Get(Of Integer)("AiKeyMode") = 1
+            Catch ex As Exception
+                Logger.Warn(ex, "读取 AI 密钥模式失败")
+                Return False
+            End Try
+        End Get
+    End Property
+
+    ''' <summary>
+    ''' 安全地读取一个文本类型的设置项。
+    ''' </summary>
+    Private Function AiGetSettingText(Key As String) As String
+        Try
+            Return If(Settings.Get(Of String)(Key), "").Trim()
+        Catch ex As Exception
+            Logger.Warn(ex, $"读取 AI 设置 {Key} 失败")
+            Return ""
+        End Try
+    End Function
+
+    ''' <summary>
     ''' 实际使用的请求地址，已去掉结尾的斜杠。
+    ''' 使用自定义密钥时只取设置中的地址，未填写则视为未配置。
     ''' </summary>
     Friend ReadOnly Property AiApiBaseUrlNow As String
         Get
+            If AiUseCustomKey Then Return AiGetSettingText("AiApiBaseUrl").TrimEnd("/"c)
             Return If(AiApiBaseUrl, "").Trim().TrimEnd("/"c)
         End Get
     End Property
 
     ''' <summary>
-    ''' 实际使用的密钥：优先取代码内填写的值，其次取环境变量 PCL_AI_API_KEY。
+    ''' 实际使用的密钥。
+    ''' 使用自定义密钥时只取设置中的值；否则优先取代码内填写的值，其次取环境变量 PCL_AI_API_KEY。
     ''' </summary>
     Friend ReadOnly Property AiApiKeyNow As String
         Get
+            If AiUseCustomKey Then Return AiGetSettingText("AiApiKey")
             Dim Key As String = If(AiApiKey, "").Trim()
             If Key.Length > 0 Then Return Key
             Return If(Environment.GetEnvironmentVariable("PCL_AI_API_KEY"), "").Trim()
@@ -57,10 +89,12 @@ Friend Module ModSecret
     End Property
 
     ''' <summary>
-    ''' 实际使用的模型名称，未填写时回退到 gpt-4o-mini。
+    ''' 实际使用的模型名称。
+    ''' 使用自定义密钥时只取设置中选定的模型；否则取此处填写的名称，未填写时回退到 gpt-4o-mini。
     ''' </summary>
     Friend ReadOnly Property AiModelNow As String
         Get
+            If AiUseCustomKey Then Return AiGetSettingText("AiModel")
             Dim ModelName As String = If(AiModel, "").Trim()
             If ModelName.Length > 0 Then Return ModelName
             Return "gpt-4o-mini"

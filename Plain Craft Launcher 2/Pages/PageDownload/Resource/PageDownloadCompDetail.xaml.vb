@@ -262,6 +262,8 @@ GroupDone:
             End Function).ToList
             '添加开头间隔
             Stack.Children.Add(New TextBlock With {.Text = "前置资源", .FontSize = 14, .HorizontalAlignment = HorizontalAlignment.Left, .Margin = New Thickness(6, 2, 0, 5)})
+            '安全声明
+            Stack.Children.Add(New MyHint With {.Text = ModDependency.SafetyNotice, .Theme = MyHint.Themes.Yellow, .Margin = New Thickness(5, 0, 12, 6)})
             '添加前置列表
             For Each Dep In Dependences
                 Dim Item = ResourceProject.Cache(Dep).ToResourceItem(False, False)

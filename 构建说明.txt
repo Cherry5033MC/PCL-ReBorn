@@ -21,6 +21,43 @@ Plain Craft Launcher 2 ReBron —— 修改版源码说明
    - 新增 Plain Craft Launcher 2/Directory.Build.targets：在 Linux 下使用
      .NET SDK 自带 WindowsDesktop WPF 编译管道构建本 .NET Framework 4.8 工程
 
+4. 新增 Mod 前置补全
+   - 新增 Plain Craft Launcher 2/Modules/Resource/ModDependency.vb
+     从 Modrinth / CurseForge 的前置信息中找出缺失的前置（支持前置的前置），
+     按目标版本的游戏版本与 Mod 加载器挑选合适的前置版本，并排除已安装的前置。
+   - Plain Craft Launcher 2/Modules/Resource/ResourceVersion.vb
+     新增 DependencyIds 属性，同时包含已解析与尚未解析工程信息的前置 ID。
+   - Pages/PageInstance/PageInstanceMod.xaml(.vb)
+     Mod 管理页的按钮栏新增“补全前置”（与“从文件安装”等按钮同排），
+     按当前版本批量检查已安装 Mod 缺失的前置并下载到该版本的 mods 文件夹；
+     未开启版本隔离时该按钮变灰不可用（多个版本共用 mods 文件夹，无法判断前置属于哪个版本）。
+   - Pages/PageDownload/Resource/PageDownloadCompDetail.xaml.vb
+     资源详情页的“前置资源”列表顶部显示安全声明。
+   - 安全声明文本集中于 ModDependency.SafetyNotice：
+     一些特殊的模组需要特殊版本的前置（如MTR的附属需要对应的MTR模组版本），
+     PCL ReBorn暂时无法判断版本，请注意
+
+5. AI 日志分析新增密钥设置
+   - Pages/PageSetup/PageSetupSystem.xaml(.vb)
+     “设置 → 其他”新增“AI 日志分析”卡片，可选择两种密钥来源：
+       公共密钥：直接使用 Modules/ModSecret.vb 中填写的内置地址、密钥与模型；
+       自定义密钥：由用户填写接口地址与 API Key，并自动请求接口的 /models
+                   获取可用模型列表供选择（单选）。
+   - Modules/ModSecret.vb
+     AiApiBaseUrlNow / AiApiKeyNow / AiModelNow 改为按设置项 AiKeyMode 取值；
+     “自定义密钥”模式下只使用用户填写的内容，未填写完整时不会回退到内置配置。
+   - Modules/Minecraft/ModAi.vb
+     新增 FetchModelList 用于获取并解析模型列表；未配置时的提示改为指向设置页。
+   - Pages/PageSetup/Settings.vb
+     新增设置项 AiKeyMode、AiApiBaseUrl、AiApiKey（加密保存）、AiModel、AiModelList。
+
+【已知限制】
+- 前置的版本只能按游戏版本与 Mod 加载器推断，无法判断 Mod 之间的特殊版本绑定，
+  因此凡是涉及前置补全的界面都会提示上面的安全声明。
+- 从本地文件安装 Mod（“从文件安装”）没有网络信息，无法自动补全前置。
+- 未开启版本隔离的版本不能补全前置（按钮变灰）。
+- 需要 Mod 列表已完成联网识别（Mod 管理页加载完毕）才能知道每个 Mod 的前置信息。
+
 【在 Linux 上重新构建】
 依赖：
   - .NET SDK 9 及以上
